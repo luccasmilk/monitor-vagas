@@ -1,7 +1,7 @@
 from playwright.sync_api import sync_playwright
 import time
-
 import os
+import requests
 
 # Pega os secrets do GitHub Actions
 USUARIO = os.environ["PRENOTAMI_EMAIL"]
@@ -9,8 +9,24 @@ SENHA = os.environ["PRENOTAMI_PASSWORD"]
 TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
 TELEGRAM_CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
 
+# Função para enviar alerta no Telegram
+def enviar_telegram(mensagem):
+    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+    payload = {
+        "chat_id": TELEGRAM_CHAT_ID,
+        "text": mensagem
+    }
+    try:
+        r = requests.post(url, data=payload)
+        if r.status_code == 200:
+            print("✅ Alerta enviado pelo Telegram")
+        else:
+            print(f"⚠️ Erro ao enviar alerta: {r.status_code}")
+    except Exception as e:
+        print(f"⚠️ Erro ao enviar alerta: {e}")
+
 with sync_playwright() as p:
-    browser = p.chromium.launch(headless=False)
+    browser = p.chromium.launch(headless=False)  # Mude para headless=True se quiser rodar sem abrir navegador
     page = browser.new_page()
 
     # Página inicial que redireciona para login se não estiver logado
@@ -42,7 +58,7 @@ with sync_playwright() as p:
         servizio = row.query_selector("td:nth-child(2)").inner_text().strip()
         descrizione = row.query_selector("td:nth-child(3)").inner_text().strip()
 
-        # Verifica as duas opções de Cittadinanza per discendenza
+        # Verifica as opções de Cittadinanza per discendenza
         if (tipologia == "CITTADINANZA" and 
             servizio == "Cittadinanza per discendenza" and 
             (descrizione == "cittadinanza figli minori" or descrizione == "Cittadinanza per discendenza maggiorenni (L. 74/2025)")):
@@ -65,6 +81,7 @@ with sync_playwright() as p:
         print("⚠️ Ainda não há vagas disponíveis")
     else:
         print("🚨 POSSÍVEL VAGA! Entre agora!")
+        enviar_telegram("🚨 POSSÍVEL VAGA no Prenotami! Entre agora!")
 
     # Manter navegador aberto por 10 segundos para visualização
     time.sleep(10)

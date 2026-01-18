@@ -1,10 +1,13 @@
 from playwright.sync_api import sync_playwright
 import time
 
-# --------- Usuário e senha ---------
-USUARIO = "sofi.cruz95@gmail.com"
-SENHA = "Luca2024!!"
-# -----------------------------------
+import os
+
+# Pega os secrets do GitHub Actions
+USUARIO = os.environ["PRENOTAMI_EMAIL"]
+SENHA = os.environ["PRENOTAMI_PASSWORD"]
+TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
+TELEGRAM_CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
 
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=False)

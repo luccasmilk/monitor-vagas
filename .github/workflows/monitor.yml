@@ -2,7 +2,7 @@ name: Monitor Vagas Prenotami
 
 on:
   schedule:
-    - cron: "*/5 * * * *"   # a cada 5 minutos
+    - cron: "*/30 * * * *"  # Recomendo 30 min para evitar banimento de IP
   workflow_dispatch:
 
 jobs:
@@ -22,6 +22,8 @@ jobs:
         run: |
           pip install playwright requests
           playwright install chromium
+          # ESTA LINHA ABAIXO É A QUE ESTÁ FALTANDO:
+          playwright install-deps 
 
       - name: Run script
         env:
@@ -31,3 +33,11 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           python monitor_vagas.py
+
+      # ESTE PASSO NOVO VAI FAZER O PRINT APARECER NO GITHUB:
+      - name: Upload Screenshot em caso de erro
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidencia-do-erro
+          path: "*.png"
